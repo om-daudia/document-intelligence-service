@@ -1,0 +1,105 @@
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.com/schema/zeebe/1.0" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.46.1">
+  <bpmn:process id="pdf-extraction-demo" name="PDF Extraction Demo" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ExtractPdf" name="Extract PDF Data">
+      <bpmn:documentation>
+        Invoke the PDF extraction job worker via Bedrock.
+
+        Input variables (required):
+        - documentS3Bucket: S3 bucket containing the PDF
+        - documentS3Key: S3 object key
+        - documentName: Original filename for logging
+
+        Output variables (on success):
+        - extractedData: Map of extracted fields
+        - extractionModelId: Bedrock model used
+        - extractionInputTokens: Input token count
+        - extractionOutputTokens: Output token count
+        - extractionCacheReadTokens: Cached tokens read
+      </bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="extract-pdf-data" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="InvalidDocError" attachedToRef="ExtractPdf">
+      <bpmn:outgoing>Flow_ErrorInvalid</bpmn:outgoing>
+      <bpmn:errorEventDefinition errorRef="Error_InvalidDocument" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="ExtractFailError" attachedToRef="ExtractPdf">
+      <bpmn:outgoing>Flow_ErrorFail</bpmn:outgoing>
+      <bpmn:errorEventDefinition errorRef="Error_ExtractionFailed" />
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="EndEvent_Success" name="Extraction Complete">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Invalid" name="Document Invalid">
+      <bpmn:incoming>Flow_ErrorInvalid</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Failed" name="Extraction Failed">
+      <bpmn:incoming>Flow_ErrorFail</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="ExtractPdf" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="ExtractPdf" targetRef="EndEvent_Success" />
+    <bpmn:sequenceFlow id="Flow_ErrorInvalid" sourceRef="InvalidDocError" targetRef="EndEvent_Invalid" />
+    <bpmn:sequenceFlow id="Flow_ErrorFail" sourceRef="ExtractFailError" targetRef="EndEvent_Failed" />
+  </bpmn:process>
+  <bpmn:error id="Error_InvalidDocument" name="EXTRACTION_INVALID_DOCUMENT" errorCode="EXTRACTION_INVALID_DOCUMENT" />
+  <bpmn:error id="Error_ExtractionFailed" name="EXTRACTION_FAILED" errorCode="EXTRACTION_FAILED" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="pdf-extraction-demo">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="160" y="100" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="173" y="150" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExtractPdf_di" bpmnElement="ExtractPdf">
+        <dc:Bounds x="310" y="80" width="200" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Success_di" bpmnElement="EndEvent_Success">
+        <dc:Bounds x="610" y="100" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="611" y="150" width="49" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Invalid_di" bpmnElement="EndEvent_Invalid">
+        <dc:Bounds x="365" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="348" y="345" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Failed_di" bpmnElement="EndEvent_Failed">
+        <dc:Bounds x="455" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="439" y="345" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="InvalidDocError_di" bpmnElement="InvalidDocError">
+        <dc:Bounds x="375" y="155" width="30" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExtractFailError_di" bpmnElement="ExtractFailError">
+        <dc:Bounds x="465" y="155" width="30" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="210" y="125" />
+        <di:waypoint x="310" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="510" y="125" />
+        <di:waypoint x="610" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ErrorInvalid_di" bpmnElement="Flow_ErrorInvalid">
+        <di:waypoint x="390" y="185" />
+        <di:waypoint x="390" y="295" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ErrorFail_di" bpmnElement="Flow_ErrorFail">
+        <di:waypoint x="480" y="185" />
+        <di:waypoint x="480" y="295" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

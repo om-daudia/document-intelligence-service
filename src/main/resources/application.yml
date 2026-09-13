@@ -1,0 +1,38 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: bedrock-pdf-extraction
+  threads:
+    virtual:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+anthropic:
+  api-key: ${ANTHROPIC API KEY}
+  model: claude-opus-5
+
+aws:
+  region: ${AWS_REGION}
+  access-key: ${AWS_ACCESS_KEY_ID}
+  secret-key: ${AWS_SECRET_ACCESS_KEY}
+  bedrock:
+    modelId: "${BEDROCK_MODEL_ID}"
+
+extraction:
+  maxDocumentSizeBytes: 4718592
+  maxPages: 100
+  maxConcurrency: 5
+  requestTimeout: 5m
+  screenshotOutputDir: ${SCREENSHOT_OUTPUT_DIR:./screenshots}
+
+logging:
+  level:
+    root: INFO
+    com.example.extraction: INFO
+    org.camunda: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
